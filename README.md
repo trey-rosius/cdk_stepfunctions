@@ -2,8 +2,8 @@
 # Welcome to a simple step functions workflow, built with CDK,APPSYNC and PYTHON
 
 ![alt text](https://raw.githubusercontent.com/trey-rosius/cdk_stepfunctions/master/assets/apartment_studio.jpeg)
-![alt text](https://raw.githubusercontent.com/trey-rosius/cdk_stepfunctions/tree/master/assets/stepfunctions_graph.png)
-![alt text](https://raw.githubusercontent.com/trey-rosius/cdk_stepfunctions/tree/master/assets/success.png)
+![alt text](https://raw.githubusercontent.com/trey-rosius/cdk_stepfunctions/master/assets/stepfunctions_graph.png)
+![alt text](https://raw.githubusercontent.com/trey-rosius/cdk_stepfunctions/master/assets/success.png)
 
 
 This is a blank project for CDK development with Python.
