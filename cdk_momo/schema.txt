@@ -1,18 +1,18 @@
 
 
-type demo {
+type stepfunctions {
   id: String!
-  version: String!
+  arn: String!
 }
 type Query {
-  getDemos: [ demo! ]
+  getStepFunctions: [ stepfunctions! ]
 }
-input DemoInput {
+input StepFunctionsInput {
   id:ID!
-  version: String!
+  arn: String!
 }
 type Mutation {
-  addDemo(input: DemoInput!): demo
+  addStepFunction(input: StepFunctionsInput!): stepfunctions
 }
 
 schema {

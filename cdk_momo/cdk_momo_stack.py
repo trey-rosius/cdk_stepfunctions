@@ -1,6 +1,5 @@
-import json
+
 from os import path
-from typing import Dict
 
 from aws_cdk import (
     Stack,
@@ -26,8 +25,7 @@ class CdkMomoStack(Stack):
 
         with open(path.join(dirname, "schema.txt"), 'r') as file:
             data_schema = file.read().replace('\n', '')
-        with open(path.join(dirname, "local.json"), 'r+', encoding='utf-8') as local:
-            state_asl = json.load(local)
+
         # dynamodb service role
 
         general_role = role.Role(self, 'dynamodbRole',
@@ -81,7 +79,7 @@ class CdkMomoStack(Stack):
         fail_step = sf.Fail(self, 'Fail', cause="Failed to Update Apartment Status", error="ConditionalFailedException")
 
         # Define Step function tasks
-        update_apartment_status_booked = sf_tasks.DynamoUpdateItem(
+        change_apartment_status = sf_tasks.DynamoUpdateItem(
             self, "Change Apartment Status",
             key={
                 'id': sf_tasks.DynamoAttributeValue.from_string(sf.JsonPath.string_at("$.details.accountId")),
@@ -125,7 +123,7 @@ class CdkMomoStack(Stack):
         )
         apartment_paid = sf.Pass(self, 'Apartment Paid', comment="Apartment Paid")
 
-        definition = update_apartment_status_booked.next(wait_step) \
+        definition = change_apartment_status.next(wait_step) \
             .next(get_status) \
             .next(sf.Choice(self, "Has the Apartment been Paid ?", comment="Has the Apartment been Paid ?")
                   .when(sf.Condition.string_equals(sf.JsonPath.string_at("$.getItem.Item.id.S"), '1234567') and
@@ -133,6 +131,14 @@ class CdkMomoStack(Stack):
                         apartment_paid
                         )
                   .otherwise(apartment_not_paid))
+
+        step = sf.StateMachine(self, 'MomoStateMachine',
+
+                               definition=definition,
+
+                               state_machine_name="MomoStateMachine",
+                               state_machine_type=sf.StateMachineType.STANDARD
+                               )
 
         # Create the AWS Lambda function to subscribe to Amazon SQS queue
         # The source code is in './lambda' directory
@@ -142,14 +148,6 @@ class CdkMomoStack(Stack):
             handler="start_step_function.handler",
             code=lambda_.Code.from_asset(path.join(dirname, "lambda")),
         )
-
-        step = sf.StateMachine(self, 'MomoStateMachine',
-
-                               definition=definition,
-
-                               state_machine_name="MomoStateMachine",
-                               state_machine_type=sf.StateMachineType.STANDARD
-                               )
 
         cdk_momo_data_source = appsync.CfnDataSource(self, "CDKMOMODatasource", api_id=api.attr_api_id,
                                                      name="CdkMomoDataSource", type='AWS_LAMBDA',
@@ -163,7 +161,7 @@ class CdkMomoStack(Stack):
             "AddDemoResolver",
             api_id=api.attr_api_id,
             type_name="Mutation",
-            field_name="addDemo",
+            field_name="addStepFunction",
             data_source_name=cdk_momo_data_source.attr_name
 
         )
